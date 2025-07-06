@@ -7,10 +7,10 @@ from transformers import pipeline
 import tempfile
 import zipfile
 
-# Cache model loading to speed up repeat runs
+# Cache model loading to speed up repeat runs and use lightweight model
 @st.cache_resource
 def load_model():
-    return pipeline("zero-shot-classification")
+    return pipeline("zero-shot-classification", model="valhalla/distilbart-mnli-12-3")
 
 keyword_extractor = load_model()
 AI_CATEGORIES = ["Resume", "Bill", "Invoice", "Assignment", "Notes", "Project", "Certificate"]
@@ -56,7 +56,6 @@ def organize_files(upload_folder):
             ext = file.suffix.lower()
             moved = False
 
-            # AI classification for .pdf and .txt
             if ext in [".pdf", ".txt"]:
                 text = extract_pdf_text(file) if ext == ".pdf" else extract_txt_text(file)
                 category = ai_classify(text)
@@ -97,15 +96,14 @@ def zip_folder(folder_path):
 def display_folder_structure(folder_path):
     for root, dirs, files in os.walk(folder_path):
         level = root.replace(folder_path, '').count(os.sep)
+        if level == 0:
+            continue  # Skip temp root folder name
         indent = '    ' * level
-        if level ==0:
-            continue
         st.markdown(f"{indent}📁 **{os.path.basename(root)}**")
         sub_indent = '    ' * (level + 1)
         for file in files:
             st.markdown(f"{sub_indent}- {file}")
 
-# Streamlit UI
 st.set_page_config(page_title="Smart File Organizer", page_icon="📁")
 st.title("📁 Smart File Organizer")
 
@@ -115,6 +113,10 @@ if uploaded_files:
     with tempfile.TemporaryDirectory() as tmp_dir:
         file_paths = []
         for uploaded_file in uploaded_files:
+            if uploaded_file.size > 10 * 1024 * 1024:  # Skip large files
+                st.warning(f"⚠️ {uploaded_file.name} is too large and was skipped.")
+                continue
+
             file_path = os.path.join(tmp_dir, uploaded_file.name)
             with open(file_path, "wb") as f:
                 f.write(uploaded_file.read())
