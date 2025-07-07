@@ -113,7 +113,7 @@ if uploaded_files:
     with tempfile.TemporaryDirectory() as tmp_dir:
         file_paths = []
         for uploaded_file in uploaded_files:
-            if uploaded_file.size > 10 * 1024 * 1024:  # Skip large files
+            if uploaded_file.size > 40 * 1024 * 1024:  # Skip large files
                 st.warning(f"⚠️ {uploaded_file.name} is too large and was skipped.")
                 continue
 
