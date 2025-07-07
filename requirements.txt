@@ -2,3 +2,4 @@ streamlit
 transformers
 pdfplumber
 torch
+protobuf==3.20.0
